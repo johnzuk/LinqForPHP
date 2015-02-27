@@ -1,0 +1,18 @@
+{
+  "name": "linq-for-php/linq-for-php",
+  "description": "description_text",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "author's name",
+      "email": "email@example.com"
+    }
+  ],
+  "require":{},
+  "autoload": {
+    "psr-4": {
+      "LinqForPHP\\Linq\\": "src"
+    }
+  }
+}
