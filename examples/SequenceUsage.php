@@ -44,9 +44,9 @@ foreach ($wow as $n) {
 
 //$memorytest = range(0,100000,1);
 
-$memtest = Enumerable::range(1,100000)
+$memtest = Enumerable::range(1,1000)
     ->where(function($n){
-        return $n < 1000;
+        return $n < 200;
     })
     ->where(function($n){
         return $n%2;

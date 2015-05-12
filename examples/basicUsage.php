@@ -5,11 +5,28 @@ require_once "../vendor/autoload.php";
 
 use LinqForPHP\Linq\Linq;
 
-$testArray = [1,2,3,4,5,1];
+$test = Linq::range(0, 10000)
+    ->where(function ($n) {
+        return $n%2;
+    })
+    ->where(function ($n) {
+        return $n > 10;
+    })
+    ->where(function ($n) {
+        return $n < 800;
+    })
+    ->select(function ($n) {
+        return $n*2+1;
+    })
+    ->skip(10)
+    ->take(5);
 
-$test = new Linq($testArray);
+foreach ($test as $element) {
+    echo $element."  ";
+}
 
-$testArray2 = [9,8,7,6,0];
+
+/*$testArray2 = [9,8,7,6,0];
 
 $test2 = new Linq($testArray2);
 
@@ -27,12 +44,6 @@ $new = $test->select(function($n){
     return ($n%2);
 });
 
-echo '<br>';
-
-/*echo $new->aggregate(function($current,$n){
-    return $current += $n;
-});
-*/
 echo "<br><br>";
 
 echo $new->aggregate(function($current,$n){
@@ -47,16 +58,7 @@ foreach ($new as $item) {
 
 $concat = $test2->concat($test)->distinct()->each(function($n){
     echo $n;
-});
-
-/*var_dump(iterator_to_array($concat,false));
-
-echo 'LISTA: <br>';
-foreach ($concat as $item) {
-    echo $item."<br>";
-}*/
-
-
+});*/
 
 
 $end = microtime(true);

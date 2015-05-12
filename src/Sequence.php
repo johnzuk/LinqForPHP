@@ -6,16 +6,11 @@ use LinqForPHP\Linq\Exceptions\BadIndexException;
 
 class Sequence extends Enumerable
 {
-    private $max = 0;
     private $elements = [];
 
-    function __construct($init = null)
+    function __construct($init)
     {
-        if(is_int($init))
-        {
-            $this->max = $init;
-        }
-        else if(is_array($init))
+        if(is_array($init))
         {
             $this->elements = $init;
         }

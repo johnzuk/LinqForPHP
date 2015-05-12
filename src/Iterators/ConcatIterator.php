@@ -2,7 +2,7 @@
 
 namespace LinqForPHP\Linq\Iterators;
 
-use LinqForPHP\Linq\Exception\InvalidIteratorException;
+use LinqForPHP\Linq\Exceptions\InvalidIteratorException;
 
 class ConcatIterator extends \AppendIterator
 {
