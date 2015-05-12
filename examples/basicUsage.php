@@ -5,7 +5,7 @@ require_once "../vendor/autoload.php";
 
 use LinqForPHP\Linq\Linq;
 
-$test = Linq::range(0, 10000)
+$test = Linq::range(0, 100000)
     ->where(function ($n) {
         return $n%2;
     })

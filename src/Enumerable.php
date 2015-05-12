@@ -1,6 +1,7 @@
 <?php
 namespace LinqForPHP\Linq;
 
+use LinqForPHP\Linq\Exceptions\ArgumentOutOfRangeException;
 use LinqForPHP\Linq\Exceptions\InvalidIteratorException;
 use LinqForPHP\Linq\Exceptions\InvalidOperationException;
 use LinqForPHP\Linq\Iterators\ConcatIterator;
@@ -150,6 +151,44 @@ class Enumerable implements \IteratorAggregate
         return new Enumerable($distinct());
     }
 
+    public function elementAt($position)
+    {
+        foreach ($this as $key => $element) {
+            if ($key == $position) {
+                return $element;
+            }
+        }
+        throw new ArgumentOutOfRangeException(sprintf("Element on position %s not exist", $position));
+    }
+
+    public function elementAtOrDefault($position)
+    {
+        foreach ($this as $key => $element) {
+            if ($key == $position) {
+                return $element;
+            }
+        }
+
+        return $this->default;
+    }
+
+    public function isEmpty()
+    {
+        //todo rename this function to empty in php7
+        //because in older version php the word empty id keyword
+        return empty($this->toArray());
+    }
+
+    public function except($element, callable $comparer = null)
+    {
+        if ($comparer === null) {
+            $comparer = $this->getDefaultCoparer();
+        }
+        return $this->where(function ($n) use ($element, $comparer) {
+            return !$comparer($n, $element);
+        });
+    }
+
     public function first(callable $callback = null)
     {
         if (is_null($callback)) {
@@ -176,6 +215,137 @@ class Enumerable implements \IteratorAggregate
         return $this->default;
     }
 
+    //Todo groups methods
+
+    public function intersection(Enumerable $enumerator)
+    {
+
+        $intersection = function () use ($enumerator) {
+            $tempArray = $enumerator->toArray();
+            foreach ($this as $element) {
+                if (in_array($element, $tempArray)) {
+                    yield $element;
+                }
+            }
+        };
+
+        return new Enumerable($intersection());
+    }
+
+    public function join()
+    {
+        //todo join
+    }
+
+    public function last(callable $callback = null)
+    {
+        if (is_null($callback)) {
+            $callback = $this->getTrueCallback();
+        }
+        $lastElement = null;
+        foreach ($this as $element) {
+            if ($callback($element)) {
+                $lastElement = $element;
+            }
+        }
+        if ($lastElement) {
+            return $lastElement;
+        }
+        throw new InvalidOperationException();
+    }
+
+    public function lastOrDefault(callable $callback = null)
+    {
+        if (is_null($callback)) {
+            $callback = $this->getTrueCallback();
+        }
+        $lastElement = null;
+        foreach ($this as $element) {
+            if ($callback($element)) {
+                $lastElement = $element;
+            }
+        }
+        if ($lastElement) {
+            return $lastElement;
+        }
+        return $this->default;
+    }
+
+    public function max()
+    {
+
+    }
+
+    public function min()
+    {
+
+    }
+
+    public function orderBy()
+    {
+
+    }
+
+    public function orderByDescending()
+    {
+
+    }
+
+    /**
+     * @param int $start
+     * @param int $end
+     * @param int $step
+     * @return Enumerable
+     */
+    public static function range($start, $end, $step = 1)
+    {
+        $range = function() use ($start, $end, $step) {
+            for ($i = $start; $i<=$end; $i+=$step) {
+                yield $i;
+            }
+        };
+
+        return new Enumerable($range());
+    }
+
+    public static function repeat($element, $count)
+    {
+        $repeat = function () use ($element, $count) {
+            for ($i = 0; $i < $count; $i++) {
+                yield $element;
+            }
+        };
+
+        return new Enumerable($repeat());
+    }
+
+    public function reverse()
+    {
+
+    }
+
+    public function select(callable $callback)
+    {
+        $select = function () use ($callback) {
+            foreach ($this as $item) {
+                yield $callback($item);
+            }
+
+        };
+
+        return new Enumerable($select());
+    }
+
+    public function selectMany()
+    {
+
+    }
+
+    public function sequenceEqual()
+    {
+
+    }
+
     public function single(callable $callback = null)
     {
         if (is_null($callback)) {
@@ -198,29 +368,52 @@ class Enumerable implements \IteratorAggregate
         return $found;
     }
 
-    public function select(callable $callback)
+    public function singleOrDefault(callable $callback = null)
     {
-        $select = function () use ($callback) {
-            foreach ($this as $item) {
-                yield $callback($item);
+        if (is_null($callback)) {
+            $callback = $this->getTrueCallback();
+        }
+
+        $found = false;
+        foreach ($this as $element) {
+            if ($found) {
+                throw new InvalidOperationException();
             }
-
-        };
-
-        return new Enumerable($select());
+            if ($callback($element)) {
+                $found = true;
+            }
+        }
+        if (!$found) {
+            return $this->default;
+        }
+        return $found;
     }
 
-    public function where(callable $callback)
+    public function skip($skip)
     {
-        $where = function () use ($callback) {
-            foreach ($this->iterator as $item) {
-                if ($callback($item)) {
+        return new Enumerable(new \LimitIterator($this->iterator, $skip));
+    }
+
+    public function skipWhile(callable $callback)
+    {
+        $skip = function () use ($callback) {
+            $skipped = false;
+            foreach ($this as $item) {
+                if (!$skipped && !$callback($item)) {
+                    $skipped = true;
+                }
+                if ($skipped) {
                     yield $item;
                 }
             }
         };
 
-        return new Enumerable($where());
+        return new Enumerable($skip());
+    }
+
+    public function sum()
+    {
+
     }
 
     public function take($count)
@@ -242,74 +435,27 @@ class Enumerable implements \IteratorAggregate
         return new Enumerable($take());
     }
 
-    public function skip($skip)
+    public function union()
     {
-        /*$skipFnc = function () use ($skip) {
-            $i = 0;
-            foreach ($this as $element) {
-                if ($i++ >= $skip) {
-                    yield $element;
-                }
-            }
 
-        };
-
-        return new Enumerable($skipFnc());*/
-        return new Enumerable(new \LimitIterator($this->iterator, $skip));
     }
 
-    public function skipWhile(callable $callback)
+    public function where(callable $callback)
     {
-        $skip = function () use ($callback) {
-            $skipped = false;
-            foreach ($this as $item) {
-                if (!$skipped && !$callback($item)) {
-                    $skipped = true;
-                }
-                if ($skipped) {
+        $where = function () use ($callback) {
+            foreach ($this->iterator as $item) {
+                if ($callback($item)) {
                     yield $item;
                 }
             }
         };
 
-        return new Enumerable($skip());
+        return new Enumerable($where());
     }
 
-    public function order(callable $func = null)
+    public function toArray()
     {
-
-    }
-
-    public function min()
-    {
-
-    }
-
-    public function max()
-    {
-
-    }
-
-    /**
-     * @param int $start
-     * @param int $end
-     * @param int $step
-     * @return Enumerable
-     */
-    public static function range($start, $end, $step = 1)
-    {
-        $range = function() use ($start, $end, $step) {
-            for ($i = $start; $i<=$end; $i+=$step) {
-                yield $i;
-            }
-        };
-
-        return new Enumerable($range());
-    }
-
-    public function each(callable $callback)
-    {
-        array_walk(iterator_to_array($this->iterator,false),$callback);
+        return iterator_to_array($this);
     }
 
     /**
@@ -322,11 +468,6 @@ class Enumerable implements \IteratorAggregate
     public function getIterator()
     {
         return $this->iterator;
-    }
-
-    public function toArray()
-    {
-        return iterator_to_array($this);
     }
 
     private function getTrueCallback($result = true)

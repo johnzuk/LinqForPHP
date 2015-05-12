@@ -243,7 +243,197 @@ class TestEnumerable extends PHPUnit_Framework_TestCase
         $this->assertSame([1, 2, 3, 4, 5], $distinct);
     }
 
-    public function testSelect()
+    public function testElementAtExist()
+    {
+        $elements = [1, 2, 3, 4, 5, 6, 7];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $element = $linq->elementAt(2);
+
+        $this->assertEquals(3, $element);
+    }
+
+    /**
+     * @expectedException \LinqForPHP\Linq\Exceptions\ArgumentOutOfRangeException
+     */
+    public function testElementAtNotExist()
+    {
+        $elements = [1, 2, 3, 4, 5, 6, 7];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $element = $linq->elementAt(12);
+
+        $this->assertEquals(3, $element);
+    }
+
+    public function testElementAtOrDefaultElementExist()
+    {
+        $elements = [1, 2, 3, 4, 5, 6, 7];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $element = $linq->elementAtOrDefault(2);
+
+        $this->assertEquals(3, $element);
+    }
+
+    public function testElementAtOrDefaultElementNotExist()
+    {
+        $elements = [1, 2, 3, 4, 5, 6, 7];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $element = $linq->elementAtOrDefault(12);
+
+        $this->assertEquals(0, $element);
+    }
+
+    public function testIsEmptyWhenIsEmpty()
+    {
+        $elements = [];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $empty = $linq->isEmpty();
+
+        $this->assertTrue($empty);
+    }
+
+    public function testIsEmptyWhenIsNotEmpty()
+    {
+        $elements = [1, 2, 3, 4];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $empty = $linq->isEmpty();
+
+        $this->assertFalse($empty);
+    }
+
+    public function testExcept()
+    {
+        $elements = [2.0, 2.1, 2.2, 2.3, 2.4, 2.5];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $except = $linq->except(2.2)->toArray();
+
+        $this->assertSame([2.0, 2.1, 2.3, 2.4, 2.5 ], $except);
+    }
+
+    public function testExceptWithCallback()
+    {
+        $elements = [2.0, 2.1, 2.2,"abc", "bcd", 2.3, 2.4, 2.5];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $except = $linq->except("abc", function ($n, $element) {
+            return is_string($n) == is_string($element);
+        })->toArray();
+
+        $this->assertSame([2.0, 2.1, 2.2, 2.3, 2.4, 2.5 ], $except);
+    }
+
+    public function testFirst()
+    {
+        $elements = [2.0, 2.1, 2.2,"abc", "bcd", 2.3, 2.4, 2.5];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $first = $linq->first();
+
+        $this->assertEquals(2.0, $first);
+    }
+
+    public function testFirstWithCallback()
+    {
+        $elements = [2.0, 2.1, 2.2,"abc", "bcd", 2.3, 2.4, 2.5];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $first = $linq->first(function ($n) {
+            return is_string($n);
+        });
+
+        $this->assertEquals("abc", $first);
+    }
+
+    /**
+     * @expectedException \LinqForPHP\Linq\Exceptions\InvalidOperationException
+     */
+    public function testFirstWithEmptyCollection()
+    {
+        $elements = [];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $first = $linq->first();
+    }
+
+    public function testFirstOrDefaultEmptyCollection()
+    {
+        $elements = [];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $first = $linq->firstOrDefault();
+
+        $this->assertEquals(0, $first);
+    }
+
+    public function testFirstOrDefaultNotEmptyCollection()
+    {
+        $elements = [1, 3, 4, 5];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $first = $linq->firstOrDefault();
+
+        $this->assertEquals(1, $first);
+    }
+
+    public function testIntersection()
+    {
+        $elements = [44, 26, 92, 30, 71, 38];
+        $elements2 = [39, 59, 83, 47, 26, 4, 30];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $intersection = $linq->intersection(new \LinqForPHP\Linq\Linq($elements2))->toArray();
+
+        $this->assertSame([26, 30], $intersection);
+    }
+
+    public function testLast()
+    {
+        $elements = [1, 3, 4, 5];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $last = $linq->last();
+
+        $this->assertEquals(5, $last);
+    }
+
+    public function testLastWithCallback()
+    {
+        $elements = [1, 3, "bla", 4, 5, "foo"];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $last = $linq->last(function ($n) {
+            return is_string($n);
+        });
+
+        $this->assertEquals("foo", $last);
+    }
+
+    /**
+     * @expectedException \LinqForPHP\Linq\Exceptions\InvalidOperationException
+     */
+    public function testLastFromEmpty()
+    {
+        $elements = [];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $last = $linq->last();
+    }
+
+    public function testLastOrDefaultEmptyCollection()
+    {
+        $elements = [];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $last = $linq->lastOrDefault();
+
+        $this->assertEquals(0, $last);
+    }
+
+    public function testLastOrDefaultNotEmptyCollection()
+    {
+        $elements = [3, 4, 5, 6];
+        $linq = new \LinqForPHP\Linq\Linq($elements);
+        $last = $linq->lastOrDefault();
+
+        $this->assertEquals(6, $last);
+    }
+
+    public function testRepeat()
+    {
+        $repeat = \LinqForPHP\Linq\Linq::repeat("a", 5)->toArray();
+
+        $this->assertSame(["a", "a", "a", "a", "a"], $repeat);
+    }
+
+    /*public function testSelect()
     {
         $elements = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         $linq = new \LinqForPHP\Linq\Enumerable($elements);
@@ -252,7 +442,7 @@ class TestEnumerable extends PHPUnit_Framework_TestCase
         })->toArray();
 
         $this->assertSame([3, 4, 5, 6, 7, 8, 9, 10, 11, 12], $select);
-    }
+    }*/
 
    public function testWhere()
     {
